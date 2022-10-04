@@ -1,0 +1,38 @@
+{
+    "name": "tyler/ruta",
+    "description": "Basic PSR-7 request router",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "tylersriver",
+            "email": "tyler.w.sriver@eagles.oc.edu"
+        }
+    ],
+    "scripts": {
+        "test": "pest --coverage",
+        "test-github": "pest --no-coverage",
+        "stan": "phpstan analyse src --memory-limit=-1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Ruta\\": "src\\"
+        },
+        "files": [
+            "src/functions.php"
+        ]
+    },
+    "require-dev": {
+        "pestphp/pest": "^1.21",
+        "phpstan/phpstan": "^1.2"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "require": {
+        "psr/http-message": "^1.0",
+        "psr/http-server-middleware": "^1.0",
+        "psr/http-factory": "^1.0"
+    }
+}
