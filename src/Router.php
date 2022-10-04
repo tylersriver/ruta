@@ -5,7 +5,6 @@ namespace Ruta;
 use Closure;
 use Psr\Http\Message\ServerRequestInterface;
 use ReflectionClass;
-use RouteMatch;
 use Ruta\Attributes\Route;
 
 class Router implements RouteCollectorInterface
@@ -185,16 +184,6 @@ class Router implements RouteCollectorInterface
         }
 
         $routeExecutable = $route[0];
-
-        // If route is callable return
-        if (is_callable($routeExecutable)) {
-            return $route;
-        }
-
-        // If the route is not callable we assume class
-        if (!class_exists($routeExecutable)) {
-            return null;
-        }
 
         return new RouteMatch($routeExecutable, $route[1]);
     }

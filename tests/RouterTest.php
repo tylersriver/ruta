@@ -1,6 +1,7 @@
 <?php
 
 use Ruta\Router;
+use GuzzleHttp\Psr7\ServerRequest;
 
 beforeEach(function() {
     $router = new Router();
@@ -15,4 +16,9 @@ beforeEach(function() {
 it("Create and Add Route", function() {
     $router = new Router;
     $router->get('/test', fn() => 'test');
+    $match = $router->dispatch(new ServerRequest('GET', '/test'));
+
+    expect($match->getHandler())->toBeCallable();
+    expect($match->getAttributes())->toBeArray();
+    expect(count($match->getAttributes()))->toEqual(0);
 });

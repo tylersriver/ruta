@@ -1,5 +1,7 @@
 <?php
 
+namespace Ruta;
+
 class RouteMatch
 {
     private array $attributes;
