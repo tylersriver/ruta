@@ -1,0 +1,32 @@
+name: PHP Composer Tests
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Validate composer.json and composer.lock
+      run: composer validate
+
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress --no-suggest
+      
+    # - name: Run Code Sniffer
+    #   run: composer run-script sniff      
+
+    # - name: Run Linter
+      # run: composer run-script lint
+      
+    - name: Run Static Analysis
+      run: composer run-script stan    
+
+    # - name: Run Mess Detection
+      # run: composer run-script md
+
+    - name: Run Unit Tests
+      run: composer run-script test
