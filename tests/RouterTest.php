@@ -18,6 +18,11 @@ it("Create and Add GET Route", function() {
     expect($match)->toBeNull();
 });
 
+it("Invalid route pattern", function() {
+    $router = new Router;
+    $router->get('test', fn() => 'test');
+})->throws(\Exception::class);
+
 it("Works with groups", function() {
     $router = new Router;
     $router->group('/test', function(Router $r) {
