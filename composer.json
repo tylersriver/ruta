@@ -15,7 +15,8 @@
     },
     "autoload": {
         "psr-4": {
-            "Ruta\\": "src\\"
+            "Ruta\\": "src\\",
+            "Test\\": "tests\\"
         },
         "files": [
             "src/functions.php"

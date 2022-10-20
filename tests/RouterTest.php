@@ -35,6 +35,23 @@ it("Create and Add GET Route with attribute", function() {
     expect($match)->toBeNull();
 });
 
+it("Create and Add GET Route with attribute and third part", function() {
+    $router = new Router;
+    $router->get('/test/:id/foo', fn() => 'test');
+    $match = $router->dispatch(new ServerRequest('GET', '/test/1/foo'));
+
+    expect($match->getHandler())->toBeCallable();
+    expect($match->getAttributes())->toBeArray();
+    expect(count($match->getAttributes()))->toEqual(1);
+    expect($match->getAttributes()['id'])->toEqual(1);
+    expect($match->getHandler()())->toEqual('test');
+
+    $match = $router->dispatch(new ServerRequest('POST', '/test/1'));
+    expect($match)->toBeNull();
+    $match = $router->dispatch(new ServerRequest('POST', '/test'));
+    expect($match)->toBeNull();
+});
+
 it("Create and Add POST Route", function() {
     $router = new Router;
     $router->post('/test', fn() => 'test');
