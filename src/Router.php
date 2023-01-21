@@ -6,6 +6,7 @@ use Closure;
 use Psr\Http\Message\ServerRequestInterface;
 use ReflectionClass;
 use Ruta\Attributes\Route;
+use Exception;
 
 class Router implements RouteCollectorInterface
 {
@@ -29,7 +30,7 @@ class Router implements RouteCollectorInterface
      * @param  string          $path
      * @param  string|callable $class
      * @return Router
-     * @throws \Exception
+     * @throws Exception
      */
     private function addRoute(string|array $method, string $path, string|callable $class): Router
     {
@@ -44,7 +45,7 @@ class Router implements RouteCollectorInterface
         $path = $this->currentGroup . $path;
 
         if (preg_match($this->routeRegex, $path) !== 1) {
-            throw new \Exception('Invalid route pattern');
+            throw new Exception('Invalid route pattern');
         }
 
         $pathParts = explode('/', $path);
@@ -70,7 +71,7 @@ class Router implements RouteCollectorInterface
     }
 
     /**
-     * @param string $actionDir directory that has the action classes
+     * @param  string $actionDir directory that has the action classes
      * @return Router
      */
     public function loadFromAttributes(string $actionDir, string $namespace): Router
@@ -98,7 +99,9 @@ class Router implements RouteCollectorInterface
             }
 
             // Create the route
-            /** @var Route */
+            /**
+             * @var Route
+             */
             $route = $attributes[0]->newInstance();
             $this->addRoute($route->method, $route->route, $class);
         }
@@ -146,7 +149,7 @@ class Router implements RouteCollectorInterface
             }
 
             if (!array_key_exists($part, $current)) {
-                foreach ($current as $key => $section) {
+                foreach (array_keys($current) as $key) {
                     if (substr($key, 0, 1) === ':') {
                         $attr = substr($key, 1);
                         $attrs[$attr] = $part;
