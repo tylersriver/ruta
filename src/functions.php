@@ -2,6 +2,8 @@
 
 namespace Ruta;
 
+use Exception;
+
 if (!function_exists('Ruta\cachedRouter')) {
     /**
      * The cachedRouter function exists to wrap the creation of a Router object
@@ -9,7 +11,7 @@ if (!function_exists('Ruta\cachedRouter')) {
      * from on future requests.
      *
      * @param callable $routerCollector - callable to get an instance of Router with routes
-     * @param array $cacheOptions - data needed to cache the routes in a file
+     * @param array    $cacheOptions    - data needed to cache the routes in a file
      */
     function cachedRouter(callable $routerCollector, array $cacheOptions): Router
     {
@@ -22,7 +24,7 @@ if (!function_exists('Ruta\cachedRouter')) {
 
         // Cache dir must be supplied at least when cache is enabled
         if (!isset($cacheOptions['cacheDir'])) {
-            throw new \Exception('Cache dir is required in $cacheOptions when cache is enabled');
+            throw new Exception('Cache dir is required in $cacheOptions when cache is enabled');
         }
         $cacheDir = $cacheOptions['cacheDir'];
         $version = $cacheOptions['version'] ?? 1;
@@ -30,15 +32,17 @@ if (!function_exists('Ruta\cachedRouter')) {
 
         // Get cached routes if exist
         if (file_exists($cacheFilePath)) {
-            $routesArray = require $cacheFilePath;
+            $routesArray = include $cacheFilePath;
             return new Router($routesArray);
         }
 
         // Otherwise call collector and cache
-        /** @var Router */
+        /**
+         * @var Router
+         */
         $router = $routerCollector(new Router());
         if ($router->hasClosures()) {
-            throw new \Exception(
+            throw new Exception(
                 'Unable to cache routes because the router contains routes that resolve to anonymous functions'
             );
         }
@@ -47,7 +51,7 @@ if (!function_exists('Ruta\cachedRouter')) {
         if (!is_dir($cacheDir)) {
             $created = mkdir($cacheDir, 0775, true);
             if ($created === false) {
-                throw new \Exception('The cache directory is not writable ' . $cacheDir);
+                throw new Exception('The cache directory is not writable ' . $cacheDir);
             }
         }
         $routesArr = $router->getRoutes();

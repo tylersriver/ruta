@@ -23,16 +23,16 @@ class RouteMiddleware implements MiddlewareInterface
     }
 
     public function process(
-        ServerRequestInterface $request, 
+        ServerRequestInterface $request,
         RequestHandlerInterface $handler
     ): ResponseInterface {
         $route = $this->router->dispatch($request);
 
-        if($route === null) {
+        if ($route === null) {
             return $this->responseFactory->createResponse(404);
         }
 
-        foreach($route->getAttributes() as $name => $value) {
+        foreach ($route->getAttributes() as $name => $value) {
             $request = $request->withAttribute($name, $value);
         }
 

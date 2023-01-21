@@ -9,9 +9,18 @@
         }
     ],
     "scripts": {
+        "check": [
+            "@sniff",
+            "@stan",
+            "@md",
+            "@test"
+        ],
         "test": "pest --coverage",
-        "test-github": "pest --no-coverage",
-        "stan": "phpstan analyse src --memory-limit=-1"
+        "test-github": "pest --coverage --coverage-clover=coverage.xml",
+        "stan": "phpstan analyse src --memory-limit=-1",
+        "sniff": "php vendor/squizlabs/php_codesniffer/bin/phpcs -s --colors src/",
+        "fix": "php vendor/squizlabs/php_codesniffer/bin/phpcbf src/",
+        "md": "php vendor/bin/phpmd src/ text rulesets.xml"
     },
     "autoload": {
         "psr-4": {
@@ -25,7 +34,9 @@
     "require-dev": {
         "pestphp/pest": "^1.21",
         "phpstan/phpstan": "^1.2",
-        "guzzlehttp/psr7": "^2.4"
+        "guzzlehttp/psr7": "^2.4",
+        "squizlabs/php_codesniffer": "^3.7",
+        "phpmd/phpmd": "^2.13"
     },
     "config": {
         "allow-plugins": {
@@ -33,6 +44,7 @@
         }
     },
     "require": {
+        "php": "^8.1",
         "psr/http-message": "^1.0",
         "psr/http-server-middleware": "^1.0",
         "psr/http-factory": "^1.0"

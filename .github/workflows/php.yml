@@ -1,6 +1,6 @@
 name: PHP Composer Tests
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   build:
@@ -16,8 +16,8 @@ jobs:
     - name: Install dependencies
       run: composer install --prefer-dist --no-progress --no-suggest
       
-    # - name: Run Code Sniffer
-    #   run: composer run-script sniff      
+    - name: Run Code Sniffer
+      run: composer run-script sniff      
 
     # - name: Run Linter
       # run: composer run-script lint
@@ -25,8 +25,10 @@ jobs:
     - name: Run Static Analysis
       run: composer run-script stan    
 
-    # - name: Run Mess Detection
-      # run: composer run-script md
+    - name: Run Mess Detection
+      run: composer run-script md
 
     - name: Run Unit Tests
+      env:
+        XDEBUG_MODE: coverage
       run: composer run-script test
