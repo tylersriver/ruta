@@ -197,7 +197,7 @@ it("Create and Add OPTIONS Route with attribute", function() {
 
 it("Create and Add PATCH Route", function() {
     $router = new Router;
-    $router->options('/test', fn() => 'test');
+    $router->patch('/test', fn() => 'test');
     $match = $router->dispatch(new ServerRequest('PATCH', '/test'));
 
     expect($match->getHandler())->toBeCallable();
@@ -211,7 +211,7 @@ it("Create and Add PATCH Route", function() {
 
 it("Create and Add PATCH Route with attribute", function() {
     $router = new Router;
-    $router->options('/test/:id', fn() => 'test');
+    $router->patch('/test/:id', fn() => 'test');
     $match = $router->dispatch(new ServerRequest('PATCH', '/test/1'));
 
     expect($match->getHandler())->toBeCallable();
