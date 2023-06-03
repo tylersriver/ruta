@@ -8,7 +8,7 @@ use ReflectionClass;
 use Ruta\Attributes\Route;
 use Exception;
 
-class Router implements RouteCollectorInterface
+class Router implements RouteCollectorInterface, RouterInterface
 {
     private array $routeMap;
 
@@ -26,20 +26,12 @@ class Router implements RouteCollectorInterface
     }
 
     /**
-     * @param  string|array    $method
-     * @param  string          $path
-     * @param  string|callable $class
-     * @return Router
      * @throws Exception
      */
-    private function addRoute(string|array $method, string $path, string|callable $class): Router
+    private function addRoute(string $method, string $path, string|callable $class): Router
     {
         if ($class instanceof Closure) {
             $this->usesClosures = true;
-        }
-
-        if (!is_array($method)) {
-            $method = [$method];
         }
 
         $path = $this->currentGroup . $path;
@@ -51,21 +43,19 @@ class Router implements RouteCollectorInterface
         $pathParts = explode('/', $path);
         unset($pathParts[0]);
 
-        foreach ($method as $m) {
-            $current = &$this->routeMap[$m];
-            foreach ($pathParts as $part) {
-                if (!is_array($current)) {
-                    $current = [$current];
-                }
-
-                if (!array_key_exists($part, $current)) {
-                    $current[$part] = [];
-                }
-                $current = &$current[$part];
+        $current = &$this->routeMap[$method];
+        foreach ($pathParts as $part) {
+            if (!is_array($current)) {
+                $current = [$current];
             }
 
-            $current = $class;
+            if (!array_key_exists($part, $current)) {
+                $current[$part] = [];
+            }
+            $current = &$current[$part];
         }
+
+        $current = $class;
 
         return $this;
     }
@@ -103,7 +93,7 @@ class Router implements RouteCollectorInterface
              * @var Route
              */
             $route = $attributes[0]->newInstance();
-            $this->addRoute($route->method, $route->route, $class);
+            $this->addRoute($route->method->value, $route->route, $class);
         }
 
         return $this;
@@ -191,54 +181,34 @@ class Router implements RouteCollectorInterface
         return new RouteMatch($routeExecutable, $route[1]);
     }
 
-    /**
-     * @param  string          $path
-     * @param  string|callable $class
-     * @return Router
-     */
     public function get(string $path, string|callable $class): self
     {
         return $this->addRoute('GET', $path, $class);
     }
 
-    /**
-     * @param  string          $path
-     * @param  string|callable $class
-     * @return Router
-     */
     public function post(string $path, string|callable $class): self
     {
         return $this->addRoute('POST', $path, $class);
     }
 
-    /**
-     * @param  string          $path
-     * @param  string|callable $class
-     * @return Router
-     */
     public function put(string $path, string|callable $class): self
     {
         return $this->addRoute('PUT', $path, $class);
     }
 
-    /**
-     * @param  string          $path
-     * @param  string|callable $class
-     * @return Router
-     */
     public function delete(string $path, string|callable $class): self
     {
         return $this->addRoute('DELETE', $path, $class);
     }
 
-    /**
-     * @param  string          $path
-     * @param  string|callable $class
-     * @return Router
-     */
     public function options(string $path, string|callable $class): self
     {
         return $this->addRoute('OPTIONS', $path, $class);
+    }
+
+    public function patch(string $path, string|callable $class): self
+    {
+        return $this->addRoute('PATCH', $path, $class);
     }
 
     /**

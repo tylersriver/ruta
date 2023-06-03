@@ -2,17 +2,14 @@
 
 namespace Ruta\Attributes;
 
+use Ruta\Verb;
+
 #[\Attribute(\Attribute::TARGET_CLASS)]
 final class Route
 {
-    public const GET = 'GET';
-    public const POST = 'POST';
-    public const DELETE = 'DELETE';
-    public const PUT = 'PUT';
-
     public function __construct(
-        public string $method,
-        public string $route,
+        public readonly Verb $method,
+        public readonly string $route,
     ) {
     }
 }
