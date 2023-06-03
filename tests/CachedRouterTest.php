@@ -3,6 +3,7 @@
 use GuzzleHttp\Psr7\ServerRequest;
 use Ruta\RouteMatch;
 use Ruta\Router;
+use Test\Actions\TestAction;
 
 use function Ruta\cachedRouter;
 
@@ -50,6 +51,7 @@ it('Creates router and cache file', function() {
     }
 
     $router = cachedRouter(function(Router $router) {
+        $router->patch('/test/:id', TestAction::class);
         return $router;
     },  [
         'cacheEnabled' => true,
