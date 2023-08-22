@@ -10,12 +10,12 @@ use Psr\Http\Message\ResponseFactoryInterface;
 
 class RouteMiddleware implements MiddlewareInterface
 {
-    private Router $router;
+    private RouterInterface $router;
 
     private ResponseFactoryInterface $responseFactory;
 
     public function __construct(
-        Router $router,
+        RouterInterface $router,
         ResponseFactoryInterface $responseFactory
     ) {
         $this->router = $router;
