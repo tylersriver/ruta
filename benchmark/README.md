@@ -86,21 +86,93 @@ Run on PHP 8.4.19 (CLI, opcache off), Linux container, defaults
 (`20000 iterations × 7 repeats`, medians). Re-run locally for numbers on your
 hardware; relative ordering is what matters.
 
-<!-- RESULTS -->
+### Shape `rest` — 60 routes (20000 iterations × 7 repeats, median)
+
+| router             | setup µs | static (hit) µs/op | dynamic (hit) µs/op | dynamic deep (hit) µs/op | not found µs/op |
+|--------------------|----------:|--------------------:|---------------------:|--------------------------:|-----------------:|
+| ruta               |      69.7 |                1.16 |                 1.56 |                      1.63 |             1.13 |
+| ruta (cached)      |      34.8 |                1.16 |                 1.56 |                      1.63 |             1.12 |
+| fastroute          |       127 |                0.21 |                 0.83 |                      0.87 |             1.24 |
+| fastroute (cached) |      59.1 |                0.22 |                 0.82 |                      0.85 |             1.29 |
+| symfony            |      80.9 |                6.68 |                 7.85 |                      9.03 |             11.4 |
+| symfony (compiled) |       129 |                0.58 |                 1.10 |                      1.12 |             1.35 |
+
+### Shape `rest` — 600 routes (20000 iterations × 7 repeats, median)
+
+| router             | setup µs | static (hit) µs/op | dynamic (hit) µs/op | dynamic deep (hit) µs/op | not found µs/op |
+|--------------------|----------:|--------------------:|---------------------:|--------------------------:|-----------------:|
+| ruta               |       724 |                1.84 |                 2.29 |                      2.42 |             2.16 |
+| ruta (cached)      |       265 |                1.72 |                 2.10 |                      2.16 |             2.07 |
+| fastroute          |     2,721 |                0.23 |                 2.37 |                      2.42 |             6.94 |
+| fastroute (cached) |       544 |                0.23 |                 2.44 |                      2.47 |             7.02 |
+| symfony            |       884 |                51.9 |                 53.2 |                      54.6 |             97.0 |
+| symfony (compiled) |     1,389 |                0.59 |                 1.37 |                      1.42 |             1.61 |
+
+### Shape `rest` — 1200 routes (20000 iterations × 7 repeats, median)
+
+| router             | setup µs | static (hit) µs/op | dynamic (hit) µs/op | dynamic deep (hit) µs/op | not found µs/op |
+|--------------------|----------:|--------------------:|---------------------:|--------------------------:|-----------------:|
+| ruta               |     1,484 |                3.01 |                 3.43 |                      3.53 |             3.50 |
+| ruta (cached)      |       557 |                2.52 |                 2.98 |                      3.10 |             3.32 |
+| fastroute          |     9,070 |                0.22 |                 4.40 |                      4.40 |             13.9 |
+| fastroute (cached) |     1,142 |                0.22 |                 4.35 |                      4.41 |             14.2 |
+| symfony            |     1,828 |                 104 |                  108 |                       106 |              197 |
+| symfony (compiled) |     2,795 |                0.59 |                 1.68 |                      1.71 |             1.93 |
+
+### Shape `static` — 60 routes (20000 iterations × 7 repeats, median)
+
+| router             | setup µs | static (hit) µs/op | not found µs/op |
+|--------------------|----------:|--------------------:|-----------------:|
+| ruta               |      68.2 |                1.25 |             1.04 |
+| ruta (cached)      |      24.9 |                1.21 |             1.08 |
+| fastroute          |      59.1 |                0.23 |             0.28 |
+| fastroute (cached) |      20.4 |                0.23 |             0.27 |
+| symfony            |      78.0 |                7.42 |             11.2 |
+| symfony (compiled) |       125 |                0.59 |             1.15 |
+
+### Shape `static` — 600 routes (20000 iterations × 7 repeats, median)
+
+| router             | setup µs | static (hit) µs/op | not found µs/op |
+|--------------------|----------:|--------------------:|-----------------:|
+| ruta               |       633 |                1.57 |             1.01 |
+| ruta (cached)      |       137 |                1.32 |             1.00 |
+| fastroute          |       624 |                0.21 |             0.27 |
+| fastroute (cached) |       150 |                0.21 |             0.27 |
+| symfony            |       936 |                54.9 |             99.7 |
+| symfony (compiled) |     1,429 |                0.59 |             1.15 |
+
+### Shape `static` — 1200 routes (20000 iterations × 7 repeats, median)
+
+| router             | setup µs | static (hit) µs/op | not found µs/op |
+|--------------------|----------:|--------------------:|-----------------:|
+| ruta               |     1,332 |                1.76 |             1.00 |
+| ruta (cached)      |       259 |                1.50 |             1.01 |
+| fastroute          |     1,319 |                0.21 |             0.27 |
+| fastroute (cached) |       314 |                0.22 |             0.28 |
+| symfony            |     2,246 |                 111 |              205 |
+| symfony (compiled) |     2,994 |                0.60 |             1.16 |
 
 ### Interpretation
 
-- **Dispatch:** ruta's segment-tree lookup is essentially O(depth of the URI),
-  so its dispatch time is flat regardless of how many routes are registered —
-  at 1200 routes it dispatches static hits faster than FastRoute and an order
-  of magnitude faster than Symfony's non-compiled matcher. FastRoute stays
-  fastest on small static sets; its dynamic dispatch degrades mildly with route
-  count (chunked regexes), while Symfony's `UrlMatcher` degrades linearly and
-  its compiled matcher stays competitive.
-- **Setup:** registration cost grows with route count for every in-memory
-  subject. The cached subjects pay a near-constant file include instead, which
-  is the point of `Ruta\cachedRouter()`: at 1200 routes the cached setup is
-  several times cheaper than re-registering, and with opcache the include is
-  effectively free.
-- **Misses:** ruta and FastRoute reject unknown paths cheaply; Symfony pays for
-  an exception per miss.
+- **Dispatch:** ruta's segment-tree lookup depends on URI depth rather than on
+  route count, so it degrades only mildly as the route set grows (≈1.2 µs at 60
+  routes to ≈3 µs at 1200 in the rest shape, ≈1.8 µs purely static). FastRoute
+  is unbeatable on static hits (a flat ≈0.2 µs hash lookup at any size), but its
+  dynamic matching and especially its misses degrade with route count: from 600
+  REST routes upward ruta dispatches dynamic hits about as fast or faster
+  (2.3 µs vs 2.4 µs at 600; 3.4 µs vs 4.4 µs at 1200) and misses 3–4× faster
+  (3.5 µs vs ~14 µs at 1200). Symfony's non-compiled `UrlMatcher` degrades
+  linearly and is 30–60× slower than everything else at scale; its compiled
+  matcher is the strongest all-rounder on big route sets (≈0.6 µs static,
+  ≈1.7 µs dynamic at 1200 routes).
+- **Setup:** ruta has the cheapest cold registration of all subjects (1.5 ms
+  for 1200 REST routes vs 1.8 ms for Symfony's collection and 9.1 ms for
+  FastRoute, whose regex compilation dominates). Caching pays off as the set
+  grows: `Ruta\cachedRouter()` cuts setup roughly 3× at 600+ routes
+  (724 µs → 265 µs, 1 484 µs → 557 µs). The Symfony compiled numbers include
+  `require`-ing a large dumped file with opcache off; with opcache enabled
+  (as in production) that include — and ruta's cache include — is essentially
+  free.
+- **Misses:** ruta rejects unknown paths in ~1 µs flat on static sets — its
+  cheapest operation — while FastRoute's and Symfony's miss cost grows with
+  route count (Symfony also pays for an exception per miss).
