@@ -143,16 +143,14 @@ class Router implements RouteCollectorInterface, RouterInterface
             }
 
             if (!array_key_exists($part, $current)) {
-                foreach (array_keys($current) as $key) {
-                    if (substr($key, 0, 1) === ':') {
-                        $attr = substr($key, 1);
-                        $attrs[$attr] = $part;
-                        $current = &$current[$key];
-                        continue 2;
-                    }
+                $key = $this->findDynamicKey($current);
+                if ($key === null) {
+                    return null;
                 }
 
-                return null;
+                $attrs[substr($key, 1)] = $part;
+                $current = &$current[$key];
+                continue;
             }
             $current = &$current[$part];
         }
@@ -170,6 +168,20 @@ class Router implements RouteCollectorInterface, RouterInterface
         }
 
         return [$current, $attrs];
+    }
+
+    /**
+     * Find the key of a dynamic route segment (e.g. ":id") if one exists
+     */
+    private function findDynamicKey(array $current): ?string
+    {
+        foreach (array_keys($current) as $key) {
+            if (is_string($key) && str_starts_with($key, ':')) {
+                return $key;
+            }
+        }
+
+        return null;
     }
 
     /**
