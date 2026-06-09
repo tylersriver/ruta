@@ -10,8 +10,9 @@ if (!function_exists('Ruta\cachedRouter')) {
      * and on the first use cache the routes to a file to retrieve the routes
      * from on future requests.
      *
-     * @param callable $routerCollector - callable to get an instance of Router with routes
-     * @param array    $cacheOptions    - data needed to cache the routes in a file
+     * @param callable(Router): Router $routerCollector - callable to get an instance of Router with routes
+     * @param array{cacheEnabled?: bool, cacheDir?: string, version?: int|string} $cacheOptions
+     *        - data needed to cache the routes in a file
      */
     function cachedRouter(callable $routerCollector, array $cacheOptions): Router
     {
@@ -33,13 +34,13 @@ if (!function_exists('Ruta\cachedRouter')) {
         // Get cached routes if exist
         if (file_exists($cacheFilePath)) {
             $routesArray = include $cacheFilePath;
+            if (!is_array($routesArray)) {
+                throw new Exception('The route cache file is invalid ' . $cacheFilePath);
+            }
             return new Router($routesArray);
         }
 
         // Otherwise call collector and cache
-        /**
-         * @var Router
-         */
         $router = $routerCollector(new Router());
         if ($router->hasClosures()) {
             throw new Exception(

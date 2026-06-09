@@ -16,6 +16,7 @@ class Router implements RouteCollectorInterface, RouterInterface
 
     private string $currentGroup = '';
 
+    /** @var string[] */
     private array $previousGroup = [];
 
     private bool $usesClosures = false;
@@ -115,6 +116,9 @@ class Router implements RouteCollectorInterface, RouterInterface
         $this->currentGroup = array_pop($this->previousGroup);
     }
 
+    /**
+     * @return array{string|callable, array<string, string>}|null
+     */
     public function parseRoute(ServerRequestInterface $request): ?array
     {
         // Grab URI
@@ -159,6 +163,10 @@ class Router implements RouteCollectorInterface, RouterInterface
             }
 
             $current = $current[0];
+        }
+
+        if (!is_string($current) && !is_callable($current)) {
+            return null;
         }
 
         return [$current, $attrs];
