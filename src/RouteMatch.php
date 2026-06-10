@@ -6,6 +6,7 @@ class RouteMatch
 {
     private array $attributes;
 
+    /** @var string|callable */
     private $handler;
 
     public function __construct(string|callable $handler, array $attributes)

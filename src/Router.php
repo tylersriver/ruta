@@ -8,7 +8,7 @@ use ReflectionClass;
 use Ruta\Attributes\Route;
 use Exception;
 
-class Router implements RouteCollectorInterface
+class Router implements RouteCollectorInterface, RouterInterface
 {
     private array $routeMap;
 
@@ -16,6 +16,7 @@ class Router implements RouteCollectorInterface
 
     private string $currentGroup = '';
 
+    /** @var string[] */
     private array $previousGroup = [];
 
     private bool $usesClosures = false;
@@ -26,20 +27,12 @@ class Router implements RouteCollectorInterface
     }
 
     /**
-     * @param  string|array    $method
-     * @param  string          $path
-     * @param  string|callable $class
-     * @return Router
      * @throws Exception
      */
-    private function addRoute(string|array $method, string $path, string|callable $class): Router
+    private function addRoute(string $method, string $path, string|callable $class): Router
     {
         if ($class instanceof Closure) {
             $this->usesClosures = true;
-        }
-
-        if (!is_array($method)) {
-            $method = [$method];
         }
 
         $path = $this->currentGroup . $path;
@@ -51,21 +44,19 @@ class Router implements RouteCollectorInterface
         $pathParts = explode('/', $path);
         unset($pathParts[0]);
 
-        foreach ($method as $m) {
-            $current = &$this->routeMap[$m];
-            foreach ($pathParts as $part) {
-                if (!is_array($current)) {
-                    $current = [$current];
-                }
-
-                if (!array_key_exists($part, $current)) {
-                    $current[$part] = [];
-                }
-                $current = &$current[$part];
+        $current = &$this->routeMap[$method];
+        foreach ($pathParts as $part) {
+            if (!is_array($current)) {
+                $current = [$current];
             }
 
-            $current = $class;
+            if (!array_key_exists($part, $current)) {
+                $current[$part] = [];
+            }
+            $current = &$current[$part];
         }
+
+        $current = $class;
 
         return $this;
     }
@@ -103,7 +94,7 @@ class Router implements RouteCollectorInterface
              * @var Route
              */
             $route = $attributes[0]->newInstance();
-            $this->addRoute($route->method, $route->route, $class);
+            $this->addRoute($route->method->value, $route->route, $class);
         }
 
         return $this;
@@ -125,6 +116,9 @@ class Router implements RouteCollectorInterface
         $this->currentGroup = array_pop($this->previousGroup);
     }
 
+    /**
+     * @return array{string|callable, array<string, string>}|null
+     */
     public function parseRoute(ServerRequestInterface $request): ?array
     {
         // Grab URI
@@ -149,16 +143,14 @@ class Router implements RouteCollectorInterface
             }
 
             if (!array_key_exists($part, $current)) {
-                foreach (array_keys($current) as $key) {
-                    if (substr($key, 0, 1) === ':') {
-                        $attr = substr($key, 1);
-                        $attrs[$attr] = $part;
-                        $current = &$current[$key];
-                        continue 2;
-                    }
+                $key = $this->findDynamicKey($current);
+                if ($key === null) {
+                    return null;
                 }
 
-                return null;
+                $attrs[substr($key, 1)] = $part;
+                $current = &$current[$key];
+                continue;
             }
             $current = &$current[$part];
         }
@@ -171,7 +163,25 @@ class Router implements RouteCollectorInterface
             $current = $current[0];
         }
 
+        if (!is_string($current) && !is_callable($current)) {
+            return null;
+        }
+
         return [$current, $attrs];
+    }
+
+    /**
+     * Find the key of a dynamic route segment (e.g. ":id") if one exists
+     */
+    private function findDynamicKey(array $current): ?string
+    {
+        foreach (array_keys($current) as $key) {
+            if (is_string($key) && str_starts_with($key, ':')) {
+                return $key;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -191,54 +201,34 @@ class Router implements RouteCollectorInterface
         return new RouteMatch($routeExecutable, $route[1]);
     }
 
-    /**
-     * @param  string          $path
-     * @param  string|callable $class
-     * @return Router
-     */
     public function get(string $path, string|callable $class): self
     {
         return $this->addRoute('GET', $path, $class);
     }
 
-    /**
-     * @param  string          $path
-     * @param  string|callable $class
-     * @return Router
-     */
     public function post(string $path, string|callable $class): self
     {
         return $this->addRoute('POST', $path, $class);
     }
 
-    /**
-     * @param  string          $path
-     * @param  string|callable $class
-     * @return Router
-     */
     public function put(string $path, string|callable $class): self
     {
         return $this->addRoute('PUT', $path, $class);
     }
 
-    /**
-     * @param  string          $path
-     * @param  string|callable $class
-     * @return Router
-     */
     public function delete(string $path, string|callable $class): self
     {
         return $this->addRoute('DELETE', $path, $class);
     }
 
-    /**
-     * @param  string          $path
-     * @param  string|callable $class
-     * @return Router
-     */
     public function options(string $path, string|callable $class): self
     {
         return $this->addRoute('OPTIONS', $path, $class);
+    }
+
+    public function patch(string $path, string|callable $class): self
+    {
+        return $this->addRoute('PATCH', $path, $class);
     }
 
     /**
