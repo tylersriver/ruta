@@ -1,0 +1,43 @@
+name: Benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      routes:
+        description: Comma separated route-set sizes
+        required: false
+        default: '60,600,1200'
+      shapes:
+        description: Comma separated route-set shapes (rest, static)
+        required: false
+        default: 'rest,static'
+      iterations:
+        description: Dispatches per measurement
+        required: false
+        default: '20000'
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.5'
+        coverage: none
+
+    - name: Install dependencies
+      working-directory: benchmark
+      run: composer install --prefer-dist --no-progress
+
+    - name: Run benchmark
+      working-directory: benchmark
+      run: |
+        php -d opcache.enable_cli=1 run.php \
+          --routes='${{ inputs.routes }}' \
+          --shapes='${{ inputs.shapes }}' \
+          --iterations='${{ inputs.iterations }}' \
+          | tee -a "$GITHUB_STEP_SUMMARY"

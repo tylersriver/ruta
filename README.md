@@ -31,3 +31,9 @@ $responseFactory = somePsrResponseFactory();
 $middleware = new Ruta\RouteMiddleware($r, $responseFactory);
 
 ```
+
+# Benchmarks
+A re-runnable benchmark comparing ruta against FastRoute and Symfony's
+compiled router lives in [`benchmark/`](benchmark/README.md). Run it locally
+with `cd benchmark && composer install && php run.php`, or trigger the
+**Benchmark** GitHub Actions workflow for results in the job summary.
